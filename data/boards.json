@@ -1,0 +1,12 @@
+{
+  "_comment": "거래·혈맹 모집 화면에 보이는 예시 글입니다. 글쓰기 기능을 서버에 연결하면 이 파일은 필요 없어집니다.",
+  "trade": [
+    { "example": true, "type": "팝니다", "title": "+8 시르 블레이드", "server": "바츠", "price": "다이아 12,000", "contact": "인게임 귓말 '오락실'", "body": "제련 옵션은 귓말로 알려드립니다.", "date": "2026-11-15" },
+    { "example": true, "type": "삽니다", "title": "영웅 방어구 상의 (강화 무관)", "server": "바츠", "price": "가격 협의", "contact": "디스코드 example#0000", "body": "", "date": "2026-11-14" },
+    { "example": true, "done": true, "type": "팝니다", "title": "전투 기술서 (홀리 스트라이크)", "server": "카인", "price": "다이아 3,500", "contact": "인게임 우편", "body": "", "date": "2026-11-12" }
+  ],
+  "clan": [
+    { "example": true, "type": "혈맹원 모집", "title": "저녁 시간대 보스 레이드 함께할 분", "server": "바츠", "style": "PVE 중심", "time": "평일 21시~24시", "contact": "인게임 귓말 '오락실'", "body": "레벨 제한 없음, 디스코드 사용.", "date": "2026-11-15" },
+    { "example": true, "type": "혈맹 구함", "title": "복귀 유저, 초보 받아주는 혈맹 찾습니다", "server": "카인", "style": "친목", "time": "주말 위주", "contact": "디스코드 example#0000", "body": "", "date": "2026-11-13" }
+  ]
+}

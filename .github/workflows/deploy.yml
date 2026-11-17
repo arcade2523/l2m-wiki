@@ -1,0 +1,42 @@
+# Rebuilds and publishes the site to GitHub Pages.
+# Runs on every push and once an hour, so new YouTube uploads show up without manual work.
+name: Deploy site
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # If YouTube refuses the request, keep the video list that is already in the repository.
+      - name: Refresh video list
+        run: node tools/fetch-videos.js
+        continue-on-error: true
+      - name: Build
+        run: node tools/build.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

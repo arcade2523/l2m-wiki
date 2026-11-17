@@ -1,0 +1,41 @@
+# 관리자 글쓰기 화면 설정 (Sveltia CMS)
+# 글은 content/guides/ 폴더에 Markdown 파일로, 사진은 public/uploads/ 폴더에 저장됩니다.
+
+backend:
+  name: github
+  # "GitHub아이디/저장소이름"
+  repo: arcade2523/l2m-wiki
+  branch: main
+
+site_url: ""
+locale: ko
+
+media_folder: public/uploads
+public_folder: /uploads
+
+collections:
+  - name: guides
+    label: 공략
+    label_singular: 공략 글
+    description: 사이트의 공략 탭에 올라가는 글입니다.
+    folder: content/guides
+    extension: md
+    format: frontmatter
+    create: true
+    delete: true
+    # 파일 이름은 날짜와 시각으로 만들어져 주소가 영문·숫자로만 됩니다.
+    slug: "{{year}}{{month}}{{day}}-{{hour}}{{minute}}{{second}}"
+    summary: "{{title}} ({{date}})"
+    sortable_fields: [date, title]
+    fields:
+      - { name: title, label: 제목, widget: string }
+      - { name: date, label: 날짜, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - name: category
+        label: 주제
+        widget: select
+        default: 정보
+        options: [입문·성장, 사냥터, 실험, 클래스, 정보, 업데이트]
+      - { name: summary, label: 한 줄 요약, widget: text, required: false, hint: 목록 카드에 보이는 설명입니다. 비워 두면 본문 앞부분이 쓰입니다. }
+      - { name: cover, label: 대표 사진, widget: image, required: false, hint: 비워 두면 본문의 첫 사진이 쓰입니다. }
+      - { name: draft, label: 임시 저장 (게시하지 않음), widget: boolean, default: false, required: false }
+      - { name: body, label: 본문, widget: markdown }

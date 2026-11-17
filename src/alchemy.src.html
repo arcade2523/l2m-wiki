@@ -1,0 +1,383 @@
+<title>연금술 확률표</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky top bar → two-pane workbench (recipe rail | slot detail); rail collapses to a scroll strip on phones */
+:root{
+  --bg:#eef0f4; --surface:#ffffff; --sunken:#e3e6ec; --line:#d3d7e0;
+  --ink:#171a24; --muted:#5b6275; --accent:#b4581f; --accent-ink:#ffffff; --accent-soft:#f6e3d6;
+  --g2:#2f8a3e; --g3:#2d6fd0; --g4:#c8322f; --g5:#8a4fd1; --g0:#7a8194;
+  --font-ui:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12141c; --surface:#1b1e29; --sunken:#232737; --line:#2e3346;
+  --ink:#e8eaf2; --muted:#9aa1b5; --accent:#e58a4c; --accent-ink:#1a0f07; --accent-soft:#3a2518;
+  --g2:#5cc06b; --g3:#5c9cf5; --g4:#f06a64; --g5:#b689f5; --g0:#8e95a8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12141c; --surface:#1b1e29; --sunken:#232737; --line:#2e3346;
+  --ink:#e8eaf2; --muted:#9aa1b5; --accent:#e58a4c; --accent-ink:#1a0f07; --accent-soft:#3a2518;
+  --g2:#5cc06b; --g3:#5c9cf5; --g4:#f06a64; --g5:#b689f5; --g0:#8e95a8; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:10px}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.brand h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em}
+.brand span{font-size:12px;color:var(--muted)}
+.seg{display:inline-flex;background:var(--sunken);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button[disabled]{opacity:.45;cursor:not-allowed}
+
+main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
+
+/* workbench */
+.bench{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start}
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px);max-height:calc(100vh - 90px);overflow:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px}
+.rcard{display:grid;grid-template-columns:40px minmax(0,1fr);gap:4px 10px;text-align:left;border:1px solid transparent;background:var(--surface);border-radius:var(--r);padding:10px;cursor:pointer}
+.rcard:hover{border-color:var(--line)}
+.rcard[aria-current="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.rcard .step{grid-row:span 2;display:grid;place-items:center;font-family:var(--font-num);font-weight:500;font-size:16px;border-radius:8px;background:var(--sunken);height:40px}
+.rcard[aria-current="true"] .step{background:var(--accent);color:var(--accent-ink)}
+.rcard .marks{display:flex;gap:4px}
+.rcard .mat{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcard.nodata{opacity:.55}
+
+/* slot markers */
+.mk{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--sunken);border:1px solid var(--line)}
+.mk.rune{background:var(--accent);border-color:var(--accent)}
+.mk.epic{background:var(--g4);border-color:var(--g4)}
+.mk.legend{background:var(--g5);border-color:var(--g5)}
+.mk.pend{background:var(--g3);border-color:var(--g3)}
+.mk.stone{background:var(--g2);border-color:var(--g2)}
+
+/* detail */
+.panel{background:var(--surface);border-radius:14px;border:1px solid var(--line);padding:20px;min-width:0}
+.dhead{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;justify-content:space-between}
+.dhead h2{margin:0;font-size:26px;font-weight:700;letter-spacing:-.02em}
+.dhead h2 small{font-size:14px;font-weight:500;color:var(--muted);margin-left:6px}
+.combos{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.combo{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.combo .or{font-size:11px;color:var(--muted);margin-right:2px;width:30px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;padding:2px 8px;border-radius:6px;background:var(--sunken);border:1px solid var(--line)}
+.chip i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--sunken);border-radius:10px;padding:8px 14px;min-width:110px}
+.stat b{display:block;font-family:var(--font-num);font-size:18px;font-weight:500}
+.stat span{font-size:11px;color:var(--muted);letter-spacing:.02em}
+
+.slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:20px 0 16px}
+.slot{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-width:0}
+.slot:hover{border-color:var(--muted)}
+.slot[aria-selected="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+.slot .sl{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;color:var(--muted)}
+.slot .tag{font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;color:#fff}
+.tag.rune{background:var(--accent);color:var(--accent-ink)} .tag.epic{background:var(--g4)} .tag.legend{background:var(--g5)} .tag.pend{background:var(--g3)} .tag.stone{background:var(--g2)}
+.kbadge{font-size:11px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--sunken);color:var(--muted);white-space:nowrap}
+.kbadge.advanced{background:var(--accent-soft);color:var(--accent)}
+.slot .best{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .bp{font-size:12px;color:var(--muted)}
+
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.search{flex:1 1 220px;display:flex;align-items:center;gap:8px;background:var(--sunken);border:1px solid var(--line);border-radius:999px;padding:6px 14px}
+.search input{border:0;background:transparent;outline:0;font:inherit;color:var(--ink);width:100%}
+.cats{display:flex;flex-wrap:wrap;gap:6px}
+.cats button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.cats button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* result rows */
+.list{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 4px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.ico{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--gc) 14%,transparent);color:var(--gc);border:1px solid color-mix(in srgb,var(--gc) 45%,transparent)}
+.ico svg{width:18px;height:18px}
+.nm{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.nm .gr{font-size:11px;font-weight:600;color:var(--gc);margin-right:6px}
+.encs{grid-column:2;display:flex;flex-wrap:wrap;gap:4px}
+.enc{font-family:var(--font-num);font-size:11.5px;padding:1px 6px;border-radius:5px;background:var(--sunken);color:var(--muted)}
+.enc b{color:var(--ink);font-weight:500}
+.tot{grid-column:3;grid-row:1 / span 2;text-align:right;min-width:96px}
+.tot .p{display:block;font-family:var(--font-num);font-size:15px;font-weight:500}
+.bar{display:block;height:5px;border-radius:3px;background:var(--sunken);margin-top:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gc);border-radius:3px}
+.more{margin-top:12px;width:100%;padding:10px;border-radius:var(--r);border:1px dashed var(--line);background:transparent;cursor:pointer;color:var(--muted)}
+.empty{padding:40px 10px;text-align:center;color:var(--muted)}
+
+/* finder */
+.finder .ftable{width:100%;border-collapse:collapse;font-size:14px}
+.ftable th{font-size:11px;letter-spacing:.04em;color:var(--muted);text-align:left;font-weight:600;padding:8px;border-bottom:1px solid var(--line)}
+.ftable td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ftable td.r,.ftable th.r{text-align:right}
+.ftable tr.go{cursor:pointer}
+.ftable tr.go:hover td{background:var(--sunken)}
+.rank{font-family:var(--font-num);color:var(--muted)}
+.scroll{overflow-x:auto}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.foot{font-size:12px;color:var(--muted);margin-top:24px;max-width:72ch}
+
+@media (max-width:860px){
+  .bench{grid-template-columns:minmax(0,1fr)}
+  .rail{position:static;max-height:none;flex-direction:row;overflow-x:auto;padding:0 0 6px}
+  .rcard{grid-template-columns:auto;min-width:76px;justify-items:center;padding:8px}
+  .rcard .step{grid-row:auto;width:40px}
+  .rcard .mat{display:none}
+  .rcard .marks{gap:3px}
+  .rcard .mk{width:9px;height:9px}
+  .slots{grid-template-columns:repeat(5,minmax(96px,1fr));overflow-x:auto}
+  .panel{padding:14px}
+}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .35s ease}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-wp" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M14.5 4H20v5.5L9 20.5 3.5 15zM6 13l5 5M4 20l2.5-2.5"/></symbol>
+  <symbol id="i-ar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/></symbol>
+  <symbol id="i-acc" viewBox="0 0 24 24"><circle cx="12" cy="14" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path fill="currentColor" d="M9 3h6l-3 4z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h11"/></symbol>
+  <symbol id="i-etc" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3l7 9-7 9-7-9z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M20 20l-4.5-4.5"/></symbol>
+</svg>
+
+<header class="top"><div class="top-in gutter">
+  <div class="brand"><h1>연금술 확률표</h1><span id="brandSub">리니지2M · 일반 연금</span></div>
+  <div class="seg" role="group" aria-label="연금 종류" id="kindSeg">
+    <button data-k="normal" aria-pressed="true">일반 연금</button>
+    <button data-k="advanced" aria-pressed="false">상급 연금</button>
+  </div>
+  <div class="seg" role="group" aria-label="보기 방식">
+    <button id="view-recipe" aria-pressed="true">레시피별 보기</button>
+    <button id="view-find" aria-pressed="false">아이템으로 찾기</button>
+  </div>
+</div></header>
+
+<main class="gutter">
+  <section id="recipeView" class="bench">
+    <nav class="rail" id="rail" aria-label="연금 단계"></nav>
+    <div class="panel" id="detail"></div>
+  </section>
+
+  <section id="findView" class="panel finder" hidden>
+    <h2 style="margin:0 0 4px;font-size:22px">어느 레시피가 가장 유리할까?</h2>
+    <p class="hint" style="margin:0 0 14px">원하는 아이템 이름을 입력하면 일반·상급 연금의 모든 단계·슬롯·강화 수치 중 확률이 높은 순서로 보여줍니다. 행을 누르면 해당 레시피로 이동합니다.</p>
+    <div class="tools">
+      <label class="search"><svg width="16" height="16" aria-hidden="true"><use href="#i-search"/></svg>
+        <input id="findInput" type="search" placeholder="예: 카타나, 실레노스, 반지" autocomplete="off"></label>
+      <div class="cats" id="kindFilter" role="group" aria-label="연금 종류"></div>
+      <div class="cats" id="encFilter" role="group" aria-label="강화 수치"></div>
+    </div>
+    <div class="scroll"><table class="ftable"><thead><tr>
+      <th>#</th><th>아이템</th><th>강화</th><th>연금</th><th>단계</th><th>슬롯</th><th class="r">확률</th>
+    </tr></thead><tbody id="findBody"></tbody></table></div>
+  </section>
+
+  <p class="foot">데이터 출처: purple2m.github.io 연금 데이터(2023년 기준) · 아이템 등급은 아이콘 파일명에서 추정한 값입니다 · 슬롯 확률 합계가 100%에 못 미치는 경우 원본 데이터에 빠진 항목이 있는 것입니다(상급 연금에서 특히 많음) · 일반 연금 2~7단계는 원본 사이트에 상세 데이터가 없고, 상급 연금은 일부 단계의 재료 정보가 없습니다.</p>
+</main>
+
+<script>
+const DATA = /*__DATA__*/null;
+const ITEMS = DATA.items, KINDS = DATA.kinds;
+const KIND_NAME = { normal: '일반 연금', advanced: '상급 연금' };
+const KIND_HASH = { normal: 'r', advanced: 'a' };
+const ENCS = [...new Set(Object.values(KINDS).flatMap(rs => rs.flatMap(r => r.slots.flat().map(e => e[1]))))].sort((a,b) => a-b).map(String);
+const CAT = {all:'전체',wp:'무기',ar:'방어구',acc:'장신구',book:'스킬북',etc:'기타'};
+const GRADE = {0:['기타','--g0'],1:['일반','--g0'],2:['고급','--g2'],3:['희귀','--g3'],4:['영웅','--g4'],5:['전설','--g5']};
+const MARK = {rune:'룬',epic:'영웅↑',legend:'전설↑',pend:'펜던트',stone:'마력석'};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct = v => { const p = v/10000; return (p >= 1 ? p.toFixed(2) : p >= .01 ? p.toFixed(3) : p.toFixed(4)) + '%'; };
+const gvar = g => `var(${(GRADE[g]||GRADE[0])[1]})`;
+const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
+
+const state = { kind: 'normal', recipe: 12, slot: 0, cat: 'all', q: '', limit: 60, view: 'recipe', fq: '카타나', fenc: 'all', fkind: 'all' };
+const recipes = () => KINDS[state.kind];
+const current = () => recipes().find(x => x.n === state.recipe);
+
+// material shorthand → readable chips
+function matChip(t){
+  t = t.trim(); let g = 0, label = t;
+  if (t === '파') { g = 3; label = '희귀'; }
+  else if (t === '녹') { g = 2; label = '고급'; }
+  else if (t === '영') { g = 4; label = '영웅'; }
+  else if (t.startsWith('영웅')) { g = 4; label = '영웅 ' + t.slice(2); }
+  else if (t.startsWith('희귀')) { g = 3; label = '희귀 ' + t.slice(2); }
+  return `<span class="chip"${g ? '' : ' title="원본 표기 그대로"'}>${g ? `<i style="background:${gvar(g)}"></i>` : ''}${esc(label)}</span>`;
+}
+const matText = m => m.split(',').map(t => ({'파':'희귀','녹':'고급','영':'영웅'})[t] || t).join(' · ');
+
+// group a slot's entries by item → {i, total, encs:[[enc,p]]}
+function grouped(entries){
+  const m = new Map();
+  for (const [i, enc, p] of entries){
+    if (!m.has(i)) m.set(i, {i, total:0, encs:[]});
+    const o = m.get(i); o.total += p; o.encs.push([enc, p]);
+  }
+  const arr = [...m.values()];
+  arr.forEach(o => o.encs.sort((a,b) => a[0]-b[0]));
+  return arr.sort((a,b) => b.total - a.total);
+}
+
+function renderRail(){
+  $('#rail').innerHTML = recipes().map(r => `
+    <button class="rcard${r.has ? '' : ' nodata'}" data-r="${r.n}" aria-current="${r.n === state.recipe}">
+      <span class="step">${r.n}</span>
+      <span class="marks" aria-label="슬롯 표시">${r.marks.map(m => `<i class="mk ${m}" title="${MARK[m] || ''}"></i>`).join('')}</span>
+      <span class="mat">${r.mats.length ? esc(matText(r.mats[0])) + (r.mats.length > 1 ? ` 외 ${r.mats.length-1}` : '') : '재료 정보 없음'}</span>
+    </button>`).join('');
+}
+
+function renderDetail(){
+  const r = current();
+  const head = `
+    <div class="dhead">
+      <div>
+        <h2>${r.n}단계<small>${KIND_NAME[state.kind]}</small></h2>
+        <div class="combos">${r.mats.length ? r.mats.map((m,k) => `<div class="combo"><span class="or">${k ? '또는' : '재료'}</span>${m.split(',').map(matChip).join('')}</div>`).join('') : '<div class="hint">원본 사이트에 재료 정보가 없습니다.</div>'}</div>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>`;
+  if (!r.has){
+    $('#detail').innerHTML = head + `<div class="empty">이 단계는 원본 사이트에 결과 확률 데이터가 없습니다.</div>`;
+    return;
+  }
+  const slotBtns = r.slots.map((s, k) => {
+    const g = grouped(s), best = g[0], sum = s.reduce((a,e) => a + e[2], 0);
+    const mk = r.marks[k];
+    return `<button class="slot" role="tab" data-s="${k}" aria-selected="${k === state.slot}">
+      <span class="sl">슬롯 ${k+1}${mk ? `<span class="tag ${mk}">${MARK[mk]}</span>` : ''}</span>
+      <span class="best" style="color:${best ? gvar(ITEMS[best.i][2]) : 'inherit'}">${best ? esc(ITEMS[best.i][0]) : '—'}</span>
+      <span class="bp num">최고 ${best ? pct(best.total) : '—'}</span>
+      <span class="bp num"${sum < 995000 ? ' style="color:var(--g4)" title="원본 데이터에 빠진 항목이 있습니다"' : ''}>합계 ${pct(sum)}</span>
+    </button>`;
+  }).join('');
+  const cats = Object.entries(CAT).map(([k,v]) => `<button data-c="${k}" aria-pressed="${k === state.cat}">${v}</button>`).join('');
+  $('#detail').innerHTML = head + `
+    <div class="slots" role="tablist" aria-label="결과 슬롯">${slotBtns}</div>
+    <div class="tools">
+      <label class="search"><svg width="16" height="16" aria-hidden="true"><use href="#i-search"/></svg>
+        <input id="q" type="search" placeholder="이 슬롯에서 아이템 검색" value="${esc(state.q)}" autocomplete="off"></label>
+      <div class="cats" role="group" aria-label="분류">${cats}</div>
+    </div>
+    <div class="list" id="list"></div>`;
+  renderList();
+}
+
+function renderList(){
+  // 등급 높은 순(전설 > 영웅 > 희귀 > 고급 > 일반), 같은 등급 안에서는 확률 높은 순
+  const all = grouped(current().slots[state.slot]).sort((a,b) => (ITEMS[b.i][2] - ITEMS[a.i][2]) || (b.total - a.total));
+  const sum = all.reduce((a,o) => a + o.total, 0);
+  const hero = all.filter(o => ITEMS[o.i][2] >= 4).reduce((a,o) => a + o.total, 0);
+  $('#stats').innerHTML = `
+    <div class="stat"><b>${all.length.toLocaleString()}</b><span>나올 수 있는 아이템</span></div>
+    <div class="stat"><b style="color:var(--g4)">${pct(hero)}</b><span>영웅 이상(추정)</span></div>
+    <div class="stat"><b${sum < 995000 ? ' style="color:var(--g4)"' : ''}>${pct(sum)}</b><span>확률 합계</span></div>`;
+  const q = state.q.trim().toLowerCase();
+  const rows = all.filter(o => (state.cat === 'all' || ITEMS[o.i][1] === state.cat) && (!q || ITEMS[o.i][0].toLowerCase().includes(q)));
+  const max = rows.reduce((m,o) => Math.max(m, o.total), 0) || 1;
+  const shown = rows.slice(0, state.limit);
+  $('#list').innerHTML = shown.length ? shown.map(o => {
+    const [name, cat, g] = ITEMS[o.i];
+    return `<div class="row" style="--gc:${gvar(g)}">
+      <span class="ico" title="${CAT[cat]}"><svg><use href="#i-${cat}"/></svg></span>
+      <span class="nm"><span class="gr">${GRADE[g] ? GRADE[g][0] : ''}</span>${esc(name)}</span>
+      <span class="tot"><span class="p">${pct(o.total)}</span><span class="bar"><i style="width:${Math.max(2, o.total/max*100)}%"></i></span></span>
+      <span class="encs">${o.encs.length > 1 || o.encs[0][0] ? o.encs.map(([e,p]) => `<span class="enc">+${e} <b>${pct(p)}</b></span>`).join('') : ''}</span>
+    </div>`;
+  }).join('') + (rows.length > state.limit ? `<button class="more" id="more">${(rows.length - state.limit).toLocaleString()}개 더 보기</button>` : '')
+  : `<div class="empty">조건에 맞는 아이템이 없습니다. 검색어나 분류를 바꿔 보세요.</div>`;
+}
+
+// reverse lookup across both kinds, every recipe / slot / enchant
+function renderFind(){
+  const q = state.fq.trim().toLowerCase();
+  $('#kindFilter').innerHTML = [['all','일반+상급'],['normal','일반'],['advanced','상급']].map(([k,v]) => `<button data-fk="${k}" aria-pressed="${k === state.fkind}">${v}</button>`).join('');
+  $('#encFilter').innerHTML = ['all', ...ENCS].map(e => `<button data-e="${e}" aria-pressed="${e === state.fenc}">${e === 'all' ? '모든 강화' : '+' + e}</button>`).join('');
+  if (!q){ $('#findBody').innerHTML = `<tr><td colspan="7" class="empty">아이템 이름을 입력하세요.</td></tr>`; return; }
+  const hits = [];
+  for (const kind in KINDS){
+    if (state.fkind !== 'all' && state.fkind !== kind) continue;
+    for (const r of KINDS[kind]) r.slots.forEach((s, k) => { for (const [i, e, p] of s){
+      if (ITEMS[i][0].toLowerCase().includes(q) && (state.fenc === 'all' || String(e) === state.fenc)) hits.push({kind, r:r.n, k, i, e, p});
+    }});
+  }
+  hits.sort((a,b) => b.p - a.p);
+  $('#findBody').innerHTML = hits.length ? hits.slice(0, 50).map((h, n) => {
+    const [name, cat, g] = ITEMS[h.i];
+    return `<tr class="go" data-k="${h.kind}" data-r="${h.r}" data-s="${h.k}" style="--gc:${gvar(g)}">
+      <td class="rank">${n+1}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="ico" style="width:26px;height:26px"><svg><use href="#i-${cat}"/></svg></span><b>${esc(name)}</b></span></td>
+      <td class="num">+${h.e}</td><td><span class="kbadge ${h.kind}">${h.kind === 'advanced' ? '상급' : '일반'}</span></td><td>${h.r}단계</td><td>슬롯 ${h.k+1}</td>
+      <td class="r num"><b>${pct(h.p)}</b></td></tr>`;
+  }).join('') : `<tr><td colspan="7" class="empty">'${esc(state.fq)}'(이)가 나오는 레시피가 없습니다.</td></tr>`;
+}
+
+function setView(v){
+  state.view = v;
+  $('#recipeView').hidden = v !== 'recipe';
+  $('#findView').hidden = v !== 'find';
+  $('#view-recipe').setAttribute('aria-pressed', v === 'recipe');
+  $('#view-find').setAttribute('aria-pressed', v === 'find');
+  if (v === 'find') renderFind();
+}
+function openRecipe(kind, n, s = 0){
+  if (!KINDS[kind].some(r => r.n === n)) n = KINDS[kind].find(r => r.has).n;
+  state.kind = kind; state.recipe = n; state.slot = s; state.limit = 60;
+  store.set('alc-kind', kind); store.set('alc-' + kind, n);
+  const h = '#' + KIND_HASH[kind] + n;
+  if (location.hash !== h) history.replaceState(null, '', h);
+  document.querySelectorAll('#kindSeg [data-k]').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === kind));
+  $('#brandSub').textContent = '리니지2M · ' + KIND_NAME[kind];
+  renderRail(); renderDetail(); setView('recipe');
+  // bring the selected step into view inside the rail only (never scroll the page itself)
+  const rail = $('#rail'), cur = rail.querySelector(`.rcard[data-r="${n}"]`);
+  if (cur){
+    const a = cur.getBoundingClientRect(), b = rail.getBoundingClientRect();
+    if (a.top < b.top || a.bottom > b.bottom) rail.scrollTop += a.top - b.top - (b.height - a.height) / 2;
+    if (a.left < b.left || a.right > b.right) rail.scrollLeft += a.left - b.left - (b.width - a.width) / 2;
+  }
+}
+function parseHash(){
+  const m = location.hash.match(/^#([ra])(\d+)$/);
+  return m ? { kind: m[1] === 'a' ? 'advanced' : 'normal', n: +m[2] } : null;
+}
+
+// events
+$('#kindSeg').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return;
+  const k = b.dataset.k; openRecipe(k, +store.get('alc-' + k) || (k === 'advanced' ? 8 : 12)); });
+$('#rail').addEventListener('click', e => { const b = e.target.closest('.rcard'); if (b) openRecipe(state.kind, +b.dataset.r); });
+$('#detail').addEventListener('click', e => {
+  const s = e.target.closest('.slot'); if (s){ state.slot = +s.dataset.s; state.limit = 60;
+    document.querySelectorAll('.slot').forEach(x => x.setAttribute('aria-selected', x === s)); renderList(); return; }
+  const c = e.target.closest('[data-c]'); if (c){ state.cat = c.dataset.c; state.limit = 60;
+    document.querySelectorAll('[data-c]').forEach(x => x.setAttribute('aria-pressed', x === c)); renderList(); return; }
+  if (e.target.id === 'more'){ state.limit += 120; renderList(); }
+});
+$('#detail').addEventListener('input', e => { if (e.target.id === 'q'){ state.q = e.target.value; state.limit = 60; renderList(); } });
+$('#view-recipe').onclick = () => setView('recipe');
+$('#view-find').onclick = () => { setView('find'); $('#findInput').focus(); };
+$('#findInput').value = state.fq;
+$('#findInput').addEventListener('input', e => { state.fq = e.target.value; renderFind(); });
+$('#encFilter').addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (b){ state.fenc = b.dataset.e; renderFind(); } });
+$('#kindFilter').addEventListener('click', e => { const b = e.target.closest('[data-fk]'); if (b){ state.fkind = b.dataset.fk; renderFind(); } });
+$('#findBody').addEventListener('click', e => { const t = e.target.closest('tr.go'); if (t) openRecipe(t.dataset.k, +t.dataset.r, +t.dataset.s); });
+window.addEventListener('hashchange', () => { const h = parseHash(); if (h && (h.kind !== state.kind || h.n !== state.recipe)) openRecipe(h.kind, h.n); });
+
+// boot
+(() => {
+  const h = parseHash();
+  if (h) return openRecipe(h.kind, h.n);
+  const kind = store.get('alc-kind') === 'advanced' ? 'advanced' : 'normal';
+  openRecipe(kind, +store.get('alc-' + kind) || (kind === 'advanced' ? 8 : 12));
+})();
+</script>
