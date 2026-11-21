@@ -75,7 +75,8 @@ async function post(id){
     const alt = (m[0].match(/\balt="([^"]*)"/) || [])[1] || '';
     try {
       const local = await saveImage(src, `${id}-${++n}`);
-      content = content.replace(m[0], `<img src="{{ROOT}}${local}" alt="${alt}" loading="lazy"${w && h ? ` width="${w}" height="${h}"` : ''}>`);
+      // older posts record the size as 0×0, which would shrink the picture to a dot
+      content = content.replace(m[0], `<img src="{{ROOT}}${local}" alt="${alt}" loading="lazy"${+w > 0 && +h > 0 ? ` width="${w}" height="${h}"` : ''}>`);
     } catch (e){ console.log('  image failed', id, e.message); content = content.replace(m[0], ''); }
   }
   content = content.replace(/<span data-url="[^"]*"[^>]*>/g, '<span>').replace(/\sdata-(?:ke|origin|filename|phocus|lightbox|alt|url)[\w-]*="[^"]*"/g, '');
