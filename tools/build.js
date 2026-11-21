@@ -397,6 +397,7 @@ function alchemyPage(){
   </div>
   <div class="seg" role="group" aria-label="보기 방식">
     <button id="view-recipe" aria-pressed="true">레시피별 보기</button>
+    <button id="view-overview" aria-pressed="false">한눈에 보기</button>
     <button id="view-find" aria-pressed="false">아이템으로 찾기</button>
   </div>
 </div>`)

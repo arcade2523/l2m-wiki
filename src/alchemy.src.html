@@ -115,6 +115,43 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
 .more{margin-top:12px;width:100%;padding:10px;border-radius:var(--r);border:1px dashed var(--line);background:transparent;cursor:pointer;color:var(--muted)}
 .empty{padding:40px 10px;text-align:center;color:var(--muted)}
 
+/* result list grouped by grade: one collapsible header per grade */
+.grp{display:flex;flex-direction:column}
+.grp + .grp{margin-top:12px}
+.ghead{display:flex;align-items:center;gap:10px;width:100%;border:1px solid color-mix(in srgb,var(--gc) 35%,var(--line));border-radius:10px;
+  background:color-mix(in srgb,var(--gc) 9%,var(--surface));padding:10px 14px;cursor:pointer;text-align:left}
+.ghead:hover{border-color:var(--gc)}
+.ghead .gdot{width:12px;height:12px;border-radius:3px;background:var(--gc);flex:none}
+.ghead b{font-size:15px;color:var(--gc)}
+.ghead .gn{font-size:13px;color:var(--muted)}
+.ghead .gs{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap}
+.ghead .gs b{font-family:var(--font-num);font-weight:500;font-size:15px;color:var(--ink);margin-left:4px}
+.ghead .gch{color:var(--muted);transition:transform .15s}
+.ghead[aria-expanded="false"] .gch{transform:rotate(-90deg)}
+.gitems{display:flex;flex-direction:column;padding:2px 4px 0}
+.gitems .more{margin-top:6px}
+
+/* grade share bar on each slot card */
+.gbar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--sunken);margin:3px 0 1px}
+.gbar i{display:block;height:100%}
+.gbar i + i{box-shadow:inset 1px 0 0 var(--surface)}
+.slot .bp b{font-family:var(--font-ui);font-weight:700;margin-right:2px}
+
+/* overview: steps × slots heat table */
+.ovhead{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+.ovhead h2{margin:0 0 4px;font-size:22px}
+.ovhead .hint{max-width:62ch;margin:0}
+.ovt{width:100%;min-width:560px;border-collapse:separate;border-spacing:5px}
+.ovt th{font-size:12px;font-weight:600;color:var(--muted);text-align:center;padding:2px 4px}
+.ovt th[scope="row"]{text-align:left;white-space:nowrap;font-family:var(--font-num);font-size:13px;color:var(--ink);padding-right:8px}
+.ovc{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 4px;font-family:var(--font-num);font-size:13.5px;cursor:pointer;color:var(--ink)}
+.ovc:hover{outline:2px solid var(--ink);outline-offset:-1px}
+.ovc.top{box-shadow:inset 0 0 0 2px var(--ink);font-weight:600}
+.ovc.zero{color:var(--muted)}
+.ov-none{text-align:center;font-size:12.5px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:8px}
+.ovlegend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:10px}
+.ovlegend i{display:block;width:120px;height:10px;border-radius:5px}
+
 /* finder */
 .finder .ftable{width:100%;border-collapse:collapse;font-size:14px}
 .ftable th{font-size:11px;letter-spacing:.04em;color:var(--muted);text-align:left;font-weight:600;padding:8px;border-bottom:1px solid var(--line)}
@@ -158,6 +195,7 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
   </div>
   <div class="seg" role="group" aria-label="보기 방식">
     <button id="view-recipe" aria-pressed="true">레시피별 보기</button>
+    <button id="view-overview" aria-pressed="false">한눈에 보기</button>
     <button id="view-find" aria-pressed="false">아이템으로 찾기</button>
   </div>
 </div></header>
@@ -166,6 +204,20 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
   <section id="recipeView" class="bench">
     <nav class="rail" id="rail" aria-label="연금 단계"></nav>
     <div class="panel" id="detail"></div>
+  </section>
+
+  <section id="overView" class="panel" hidden>
+    <div class="ovhead">
+      <div>
+        <h2>한눈에 보기</h2>
+        <p class="hint">단계와 슬롯마다 <b id="ovLabel">전설</b>이 나올 확률입니다. 색이 진할수록 확률이 높고, 굵은 테두리 칸은 그 단계에서 가장 높은 슬롯입니다. 칸을 누르면 그 슬롯의 아이템 목록이 열립니다.</p>
+      </div>
+      <div class="cats" id="ovGrade" role="group" aria-label="기준 등급"></div>
+    </div>
+    <div class="scroll"><table class="ovt"><thead><tr>
+      <th>단계</th><th>슬롯 1</th><th>슬롯 2</th><th>슬롯 3</th><th>슬롯 4</th><th>슬롯 5</th>
+    </tr></thead><tbody id="ovBody"></tbody></table></div>
+    <div class="ovlegend"><span>낮음</span><i id="ovScale"></i><span>높음</span></div>
   </section>
 
   <section id="findView" class="panel finder" hidden>
@@ -200,9 +252,20 @@ const pct = v => { const p = v/10000; return (p >= 1 ? p.toFixed(2) : p >= .01 ?
 const gvar = g => `var(${(GRADE[g]||GRADE[0])[1]})`;
 const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
 
-const state = { kind: 'normal', recipe: 12, slot: 0, cat: 'all', q: '', limit: 60, view: 'recipe', fq: '카타나', fenc: 'all', fkind: 'all' };
+// glimit: items shown per grade group · closed: collapsed grade groups · ovg: overview's target grade
+const state = { kind: 'normal', recipe: 12, slot: 0, cat: 'all', q: '', glimit: {}, closed: new Set(), view: 'recipe',
+  fq: '카타나', fenc: 'all', fkind: 'all', ovg: 5, renderedKind: null };
+const GROUP_SIZE = 12;
 const recipes = () => KINDS[state.kind];
 const current = () => recipes().find(x => x.n === state.recipe);
+const pctShort = v => { const p = v/10000; return p <= 0 ? '0%' : (p >= 10 ? p.toFixed(1) : p >= 1 ? p.toFixed(2) : p.toFixed(3)) + '%'; };
+// probability per grade (index 0..5) for one slot's entries
+function gradeSums(entries){
+  const s = [0,0,0,0,0,0];
+  for (const [i, , p] of entries) s[ITEMS[i][2]] += p;
+  return s;
+}
+const GRADES_DESC = [5,4,3,2,1,0];
 
 // material shorthand → readable chips
 function matChip(t){
@@ -252,13 +315,18 @@ function renderDetail(){
     return;
   }
   const slotBtns = r.slots.map((s, k) => {
-    const g = grouped(s), best = g[0], sum = s.reduce((a,e) => a + e[2], 0);
+    const gs = gradeSums(s), sum = gs.reduce((a,b) => a + b, 0);
+    const present = GRADES_DESC.filter(g => gs[g] > 0), top = present[0];
+    // best item = highest grade first, then highest probability (same order as the list below)
+    const best = grouped(s).sort((a,b) => (ITEMS[b.i][2] - ITEMS[a.i][2]) || (b.total - a.total))[0];
     const mk = r.marks[k];
-    return `<button class="slot" role="tab" data-s="${k}" aria-selected="${k === state.slot}">
+    const share = present.map(g => `${GRADE[g][0]} ${pct(gs[g])}`).join(' · ');
+    return `<button class="slot" role="tab" data-s="${k}" aria-selected="${k === state.slot}" title="${share}">
       <span class="sl">슬롯 ${k+1}${mk ? `<span class="tag ${mk}">${MARK[mk]}</span>` : ''}</span>
       <span class="best" style="color:${best ? gvar(ITEMS[best.i][2]) : 'inherit'}">${best ? esc(ITEMS[best.i][0]) : '—'}</span>
-      <span class="bp num">최고 ${best ? pct(best.total) : '—'}</span>
-      <span class="bp num"${sum < 995000 ? ' style="color:var(--g4)" title="원본 데이터에 빠진 항목이 있습니다"' : ''}>합계 ${pct(sum)}</span>
+      <span class="gbar" aria-hidden="true">${present.map(g => `<i style="width:${gs[g]/(sum||1)*100}%;background:${gvar(g)}"></i>`).join('')}</span>
+      <span class="bp num">${top != null ? `<b style="color:${gvar(top)}">${GRADE[top][0]}</b>${pct(gs[top])}` : '—'}</span>
+      ${sum < 995000 ? `<span class="bp num" style="color:var(--g4)" title="원본 데이터에 빠진 항목이 있습니다">합계 ${pct(sum)} (누락)</span>` : ''}
     </button>`;
   }).join('');
   const cats = Object.entries(CAT).map(([k,v]) => `<button data-c="${k}" aria-pressed="${k === state.cat}">${v}</button>`).join('');
@@ -284,18 +352,58 @@ function renderList(){
     <div class="stat"><b${sum < 995000 ? ' style="color:var(--g4)"' : ''}>${pct(sum)}</b><span>확률 합계</span></div>`;
   const q = state.q.trim().toLowerCase();
   const rows = all.filter(o => (state.cat === 'all' || ITEMS[o.i][1] === state.cat) && (!q || ITEMS[o.i][0].toLowerCase().includes(q)));
+  if (!rows.length){ $('#list').innerHTML = `<div class="empty">조건에 맞는 아이템이 없습니다. 검색어나 분류를 바꿔 보세요.</div>`; return; }
   const max = rows.reduce((m,o) => Math.max(m, o.total), 0) || 1;
-  const shown = rows.slice(0, state.limit);
-  $('#list').innerHTML = shown.length ? shown.map(o => {
+  const row = o => {
     const [name, cat, g] = ITEMS[o.i];
     return `<div class="row" style="--gc:${gvar(g)}">
       <span class="ico" title="${CAT[cat]}"><svg><use href="#i-${cat}"/></svg></span>
-      <span class="nm"><span class="gr">${GRADE[g] ? GRADE[g][0] : ''}</span>${esc(name)}</span>
+      <span class="nm">${esc(name)}</span>
       <span class="tot"><span class="p">${pct(o.total)}</span><span class="bar"><i style="width:${Math.max(2, o.total/max*100)}%"></i></span></span>
       <span class="encs">${o.encs.length > 1 || o.encs[0][0] ? o.encs.map(([e,p]) => `<span class="enc">+${e} <b>${pct(p)}</b></span>`).join('') : ''}</span>
     </div>`;
-  }).join('') + (rows.length > state.limit ? `<button class="more" id="more">${(rows.length - state.limit).toLocaleString()}개 더 보기</button>` : '')
-  : `<div class="empty">조건에 맞는 아이템이 없습니다. 검색어나 분류를 바꿔 보세요.</div>`;
+  };
+  // rows are already sorted grade-first, so consecutive runs form the groups
+  const groups = [];
+  for (const o of rows){
+    const g = ITEMS[o.i][2];
+    if (!groups.length || groups[groups.length - 1].g !== g) groups.push({ g, items: [], sum: 0 });
+    const G = groups[groups.length - 1]; G.items.push(o); G.sum += o.total;
+  }
+  $('#list').innerHTML = groups.map(G => {
+    const open = !state.closed.has(G.g), lim = state.glimit[G.g] || GROUP_SIZE;
+    return `<section class="grp" style="--gc:${gvar(G.g)}">
+      <button class="ghead" data-g="${G.g}" aria-expanded="${open}">
+        <i class="gdot"></i><b>${GRADE[G.g][0]}</b><span class="gn">${G.items.length}개</span>
+        <span class="gs">이 등급이 나올 확률<b>${pct(G.sum)}</b></span><span class="gch" aria-hidden="true">▾</span>
+      </button>
+      ${open ? `<div class="gitems">${G.items.slice(0, lim).map(row).join('')}${G.items.length > lim
+        ? `<button class="more" data-gmore="${G.g}">${GRADE[G.g][0]} ${(G.items.length - lim).toLocaleString()}개 더 보기</button>` : ''}</div>` : ''}
+    </section>`;
+  }).join('');
+}
+
+// overview: every step × slot of the current kind, coloured by the chance of the target grade or better
+function renderOverview(){
+  const T = state.ovg, col = gvar(T);
+  const label = T === 5 ? '전설' : GRADE[T][0] + ' 이상';
+  $('#ovLabel').textContent = label;
+  $('#ovGrade').innerHTML = [5,4,3].map(g => `<button data-ovg="${g}" aria-pressed="${g === T}">${g === 5 ? '전설' : GRADE[g][0] + ' 이상'}</button>`).join('');
+  $('#ovScale').style.background = `linear-gradient(90deg, color-mix(in srgb,${col} 10%,var(--surface)), ${col})`;
+  const rs = recipes();
+  const vals = rs.map(r => r.has ? r.slots.map(s => gradeSums(s).slice(T).reduce((a,b) => a + b, 0)) : null);
+  const max = Math.max(1, ...vals.flat().filter(v => v != null));
+  $('#ovBody').innerHTML = rs.map((r, ri) => {
+    const v = vals[ri];
+    if (!v) return `<tr><th scope="row">${r.n}단계</th><td colspan="5"><div class="ov-none">원본 사이트에 이 단계의 확률 데이터가 없습니다</div></td></tr>`;
+    const best = Math.max(...v);
+    return `<tr><th scope="row">${r.n}단계</th>${v.map((x, k) => {
+      const a = x > 0 ? Math.round(10 + x / max * 80) : 0;
+      return `<td><button class="ovc${x > 0 && x === best ? ' top' : ''}${x > 0 ? '' : ' zero'}" data-r="${r.n}" data-s="${k}"
+        style="background:color-mix(in srgb,${col} ${a}%,var(--surface));${a > 55 ? 'color:#fff;' : ''}"
+        title="${r.n}단계 슬롯 ${k+1} · ${label} ${pct(x)}">${x > 0 ? pctShort(x) : '—'}</button></td>`;
+    }).join('')}</tr>`;
+  }).join('');
 }
 
 // reverse lookup across both kinds, every recipe / slot / enchant
@@ -325,20 +433,35 @@ function renderFind(){
 function setView(v){
   state.view = v;
   $('#recipeView').hidden = v !== 'recipe';
+  $('#overView').hidden = v !== 'overview';
   $('#findView').hidden = v !== 'find';
   $('#view-recipe').setAttribute('aria-pressed', v === 'recipe');
+  $('#view-overview').setAttribute('aria-pressed', v === 'overview');
   $('#view-find').setAttribute('aria-pressed', v === 'find');
   if (v === 'find') renderFind();
+  if (v === 'overview') renderOverview();
 }
-function openRecipe(kind, n, s = 0){
-  if (!KINDS[kind].some(r => r.n === n)) n = KINDS[kind].find(r => r.has).n;
-  state.kind = kind; state.recipe = n; state.slot = s; state.limit = 60;
-  store.set('alc-kind', kind); store.set('alc-' + kind, n);
-  const h = '#' + KIND_HASH[kind] + n;
-  if (location.hash !== h) history.replaceState(null, '', h);
+function setKind(kind){
+  state.kind = kind;
+  store.set('alc-kind', kind);
   document.querySelectorAll('#kindSeg [data-k]').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === kind));
   $('#brandSub').textContent = '리니지2M · ' + KIND_NAME[kind];
+}
+const defaultStep = kind => +store.get('alc-' + kind) || (kind === 'advanced' ? 8 : 12);
+function openRecipe(kind, n, s = 0){
+  if (!KINDS[kind].some(r => r.n === n)) n = KINDS[kind].find(r => r.has).n;
+  const fromOtherView = state.view !== 'recipe';
+  setKind(kind);
+  state.recipe = n; state.slot = s; state.glimit = {}; state.renderedKind = kind;
+  store.set('alc-' + kind, n);
+  const h = '#' + KIND_HASH[kind] + n;
+  if (location.hash !== h) history.replaceState(null, '', h);
   renderRail(); renderDetail(); setView('recipe');
+  // coming from the overview or the finder: bring the opened recipe to the top of the screen
+  if (fromOtherView){
+    const y = $('#recipeView').getBoundingClientRect().top + window.scrollY - 130;
+    if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y) });
+  }
   // bring the selected step into view inside the rail only (never scroll the page itself)
   const rail = $('#rail'), cur = rail.querySelector(`.rcard[data-r="${n}"]`);
   if (cur){
@@ -354,17 +477,28 @@ function parseHash(){
 
 // events
 $('#kindSeg').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return;
-  const k = b.dataset.k; openRecipe(k, +store.get('alc-' + k) || (k === 'advanced' ? 8 : 12)); });
+  const k = b.dataset.k;
+  if (state.view === 'overview'){ setKind(k); renderOverview(); return; }   // stay on the overview, just switch its data
+  openRecipe(k, defaultStep(k)); });
 $('#rail').addEventListener('click', e => { const b = e.target.closest('.rcard'); if (b) openRecipe(state.kind, +b.dataset.r); });
 $('#detail').addEventListener('click', e => {
-  const s = e.target.closest('.slot'); if (s){ state.slot = +s.dataset.s; state.limit = 60;
+  const s = e.target.closest('.slot'); if (s){ state.slot = +s.dataset.s; state.glimit = {};
     document.querySelectorAll('.slot').forEach(x => x.setAttribute('aria-selected', x === s)); renderList(); return; }
-  const c = e.target.closest('[data-c]'); if (c){ state.cat = c.dataset.c; state.limit = 60;
+  const c = e.target.closest('[data-c]'); if (c){ state.cat = c.dataset.c; state.glimit = {};
     document.querySelectorAll('[data-c]').forEach(x => x.setAttribute('aria-pressed', x === c)); renderList(); return; }
-  if (e.target.id === 'more'){ state.limit += 120; renderList(); }
+  const g = e.target.closest('.ghead'); if (g){ const k = +g.dataset.g;
+    state.closed.has(k) ? state.closed.delete(k) : state.closed.add(k); renderList(); return; }
+  const m = e.target.closest('[data-gmore]'); if (m){ const k = +m.dataset.gmore;
+    state.glimit[k] = (state.glimit[k] || GROUP_SIZE) + 60; renderList(); }
 });
-$('#detail').addEventListener('input', e => { if (e.target.id === 'q'){ state.q = e.target.value; state.limit = 60; renderList(); } });
-$('#view-recipe').onclick = () => setView('recipe');
+$('#detail').addEventListener('input', e => { if (e.target.id === 'q'){ state.q = e.target.value; state.glimit = {}; renderList(); } });
+$('#overView').addEventListener('click', e => {
+  const c = e.target.closest('.ovc'); if (c){ openRecipe(state.kind, +c.dataset.r, +c.dataset.s); return; }
+  const g = e.target.closest('[data-ovg]'); if (g){ state.ovg = +g.dataset.ovg; renderOverview(); }
+});
+// the recipe view may still show the other kind if the kind was switched on the overview
+$('#view-recipe').onclick = () => state.renderedKind === state.kind ? setView('recipe') : openRecipe(state.kind, defaultStep(state.kind));
+$('#view-overview').onclick = () => setView('overview');
 $('#view-find').onclick = () => { setView('find'); $('#findInput').focus(); };
 $('#findInput').value = state.fq;
 $('#findInput').addEventListener('input', e => { state.fq = e.target.value; renderFind(); });
@@ -378,6 +512,6 @@ window.addEventListener('hashchange', () => { const h = parseHash(); if (h && (h
   const h = parseHash();
   if (h) return openRecipe(h.kind, h.n);
   const kind = store.get('alc-kind') === 'advanced' ? 'advanced' : 'normal';
-  openRecipe(kind, +store.get('alc-' + kind) || (kind === 'advanced' ? 8 : 12));
+  openRecipe(kind, defaultStep(kind));
 })();
 </script>
