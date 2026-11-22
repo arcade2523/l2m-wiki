@@ -137,6 +137,15 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
 .ghead[aria-expanded="false"] .gch{transform:rotate(-90deg)}
 .gitems{display:flex;flex-direction:column;padding:2px 4px 0}
 .gitems .more{margin-top:6px}
+.ico.sp svg{fill:currentColor}
+.ico.sp.guess{border-style:dashed}
+.ico.sp.guess svg{fill:none;stroke:currentColor;stroke-width:2.2}
+.spg .ghead{background:color-mix(in srgb,var(--ink) 6%,var(--surface));border-color:color-mix(in srgb,var(--ink) 30%,var(--line))}
+.spg .ghead b{color:var(--ink)}
+.spicons{display:inline-flex;gap:3px}
+.guessrow .nm .est{font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--ink);margin-left:4px}
+.guessrow .p{color:var(--muted)}
+.guessrow .note{font-size:12.5px;color:var(--muted);line-height:1.5}
 .miss{margin-top:12px;border:1px dashed var(--line);border-radius:10px;padding:10px 14px;background:var(--sunken)}
 .miss .mh{display:flex;align-items:center;gap:10px}
 .miss .mh b{font-size:15px}
@@ -405,30 +414,49 @@ function renderList(){
   if (!rows.length){ $('#list').innerHTML = `<div class="empty">조건에 맞는 아이템이 없습니다. 검색어나 분류를 바꿔 보세요.</div>`; return; }
   const max = rows.reduce((m,o) => Math.max(m, o.total), 0) || 1;
   const row = o => {
-    const [name, cat, g] = ITEMS[o.i];
+    const [name, cat, g, spk] = ITEMS[o.i], sp = SPECIAL[spk];
     return `<div class="row" style="--gc:${gvar(g)}">
-      <span class="ico" title="${CAT[cat]}"><svg><use href="#i-${cat}"/></svg></span>
+      ${sp ? `<span class="ico sp" title="${sp.name}"><svg><use href="#${sp.icon}"/></svg></span>` : `<span class="ico" title="${CAT[cat]}"><svg><use href="#i-${cat}"/></svg></span>`}
       <span class="nm">${esc(name)}</span>
       <span class="tot"><span class="p">${pct(o.total)}</span><span class="bar"><i style="width:${Math.max(2, o.total/max*100)}%"></i></span></span>
       <span class="encs">${o.encs.length > 1 || o.encs[0][0] ? o.encs.map(([e,p]) => `<span class="enc">+${e} <b>${pct(p)}</b></span>`).join('') : ''}</span>
     </div>`;
   };
+  // special items (마력석 / 룬 / 펜던트) are pulled out and shown first; the rest is grouped by grade
+  const spRows = rows.filter(o => SPECIAL[ITEMS[o.i][3]]).sort((a,b) => b.total - a.total);
   // rows are already sorted grade-first, so consecutive runs form the groups
   const groups = [];
-  for (const o of rows){
+  for (const o of rows.filter(o => !SPECIAL[ITEMS[o.i][3]])){
     const g = ITEMS[o.i][2];
     if (!groups.length || groups[groups.length - 1].g !== g) groups.push({ g, items: [], sum: 0 });
     const G = groups[groups.length - 1]; G.items.push(o); G.sum += o.total;
   }
-  const r = current(), gap = 1000000 - sum;
-  const miss = missingSpecials(r, state.slot);
-  const missBlock = gap > 5000 && state.cat === 'all' && !q ? `<div class="miss">
+  const r = current(), gap = 1000000 - sum, fullView = state.cat === 'all' && !q;
+  // a special the source icon promises but the list lacks: shown as an estimated row in the special group
+  const miss = gap > 5000 && fullView ? missingSpecials(r, state.slot) : [];
+  const guessRows = miss.map(m => `<div class="row guessrow" style="--gc:var(--muted)">
+      <span class="ico sp guess" title="${SPECIAL[m].name}"><svg><use href="#${SPECIAL[m].icon}"/></svg></span>
+      <span class="nm">${SPECIAL[m].name} <span class="est">추정</span></span>
+      <span class="tot"><span class="p" title="목록에서 빠진 확률">최대 ${pct(gap)}</span></span>
+      <span class="encs"><span class="note">원본 사이트는 이 슬롯에서 ${SPECIAL[m].subj} 나온다고 표시하지만 확률 목록에는 없습니다. 목록에서 빠진 ${pct(gap)}의 대부분이 ${SPECIAL[m].name}일 가능성이 높습니다.</span></span>
+    </div>`).join('');
+  const spSum = spRows.reduce((a,o) => a + o.total, 0), spOpen = !state.closed.has('sp');
+  const spKinds = [...new Set([...spRows.map(o => ITEMS[o.i][3]), ...miss])];
+  const spGroup = spRows.length || miss.length ? `<section class="grp spg" style="--gc:var(--ink)">
+      <button class="ghead" data-g="sp" aria-expanded="${spOpen}">
+        <span class="spicons">${spKinds.map(k => `<i class="mk${spRows.some(o => ITEMS[o.i][3] === k) ? '' : ' guess'}" style="--mc:var(--ink)"><svg aria-hidden="true"><use href="#${SPECIAL[k].icon}"/></svg></i>`).join('')}</span>
+        <b>특수 아이템</b><span class="gn">${spKinds.map(k => SPECIAL[k].name).join(' · ')}</span>
+        <span class="gs">${spRows.length ? `목록 속 확률<b>${pct(spSum)}</b>` : '확률 목록에 없음'}</span><span class="gch" aria-hidden="true">▾</span>
+      </button>
+      ${spOpen ? `<div class="gitems">${spRows.map(row).join('')}${guessRows}</div>` : ''}
+    </section>` : '';
+  const missBlock = gap > 5000 && fullView && !miss.length ? `<div class="miss">
       <div class="mh"><b>목록에 없는 항목</b><span class="gs">빠진 확률<b>${pct(gap)}</b></span></div>
       <p>${miss.length
         ? `원본 사이트는 이 슬롯에서 <strong>${miss.map(m => SPECIAL[m].subj).join(', ')} 나온다</strong>고 표시하지만, 확률 데이터에는 들어 있지 않습니다. 빠진 ${pct(gap)}의 대부분이 ${miss.map(m => SPECIAL[m].name).join(', ')}일 가능성이 높습니다(추정).`
         : `원본 확률 데이터에 이 슬롯의 아이템 일부가 빠져 있습니다. 어떤 아이템인지는 원본에 정보가 없습니다.`}</p>
     </div>` : '';
-  $('#list').innerHTML = groups.map(G => {
+  $('#list').innerHTML = spGroup + groups.map(G => {
     const open = !state.closed.has(G.g), lim = state.glimit[G.g] || GROUP_SIZE;
     return `<section class="grp" style="--gc:${gvar(G.g)}">
       <button class="ghead" data-g="${G.g}" aria-expanded="${open}">
@@ -544,7 +572,7 @@ $('#detail').addEventListener('click', e => {
     document.querySelectorAll('.slot').forEach(x => x.setAttribute('aria-selected', x === s)); renderList(); return; }
   const c = e.target.closest('[data-c]'); if (c){ state.cat = c.dataset.c; state.glimit = {};
     document.querySelectorAll('[data-c]').forEach(x => x.setAttribute('aria-pressed', x === c)); renderList(); return; }
-  const g = e.target.closest('.ghead'); if (g){ const k = +g.dataset.g;
+  const g = e.target.closest('.ghead'); if (g){ const k = isNaN(+g.dataset.g) ? g.dataset.g : +g.dataset.g;
     state.closed.has(k) ? state.closed.delete(k) : state.closed.add(k); renderList(); return; }
   const m = e.target.closest('[data-gmore]'); if (m){ const k = +m.dataset.gmore;
     state.glimit[k] = (state.glimit[k] || GROUP_SIZE) + 60; renderList(); }

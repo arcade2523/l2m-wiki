@@ -26,7 +26,11 @@ function grade(icon){
   return m ? Math.max(0, 7 - +m[1]) : 0;
 }
 function itemIndex(o){
-  if (!idx.has(o.id)){ idx.set(o.id, items.length); items.push([o.ko, cat(o.icon), grade(o.icon)]); }
+  if (!idx.has(o.id)){
+    idx.set(o.id, items.length);
+    const sp = mark(o.icon);                    // 4th field only for special items: "stone" | "rune" | "pend"
+    items.push(['stone', 'rune', 'pend'].includes(sp) ? [o.ko, cat(o.icon), grade(o.icon), sp] : [o.ko, cat(o.icon), grade(o.icon)]);
+  }
   return idx.get(o.id);
 }
 const mark = x => /lune|Rune/.test(x) ? 'rune' : /pendant/.test(x) ? 'pend' : /Gracia/.test(x) ? 'stone'
