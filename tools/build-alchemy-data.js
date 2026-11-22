@@ -39,15 +39,18 @@ function load(kind, prefix, field){
     const arr = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null;
     const has = Array.isArray(arr) && arr.length > 0;
     const slots = [[], [], [], [], []];
+    const sp = [[], [], [], [], []];            // special items found in each slot's data
     if (has) for (const o of arr){
-      const i = itemIndex(o);
+      const i = itemIndex(o), k = mark(o.icon);
       for (const e of (o[field] || [])){
         const [enc, p, s] = e.split(',');
-        slots[+s.split('-')[1] - 1].push([i, +enc, Math.round(parseFloat(p) * 10000)]);
+        const slot = +s.split('-')[1] - 1;
+        slots[slot].push([i, +enc, Math.round(parseFloat(p) * 10000)]);
+        if (['rune', 'pend', 'stone'].includes(k) && !sp[slot].includes(k)) sp[slot].push(k);
       }
     }
     // src: where the numbers came from when it differs from the current files (e.g. "2023-01"), note: free text
-    return { n: +r.n, mats: r.mats, marks: r.slots.map(mark), has, slots, ...(r.src ? { src: r.src } : {}), ...(r.note ? { note: r.note } : {}) };
+    return { n: +r.n, mats: r.mats, marks: r.slots.map(mark), has, slots, sp, ...(r.src ? { src: r.src } : {}), ...(r.note ? { note: r.note } : {}) };
   });
 }
 const kinds = { normal: load('normal', 'n', 'normal'), advanced: load('advanced', 'a', 'top') };
