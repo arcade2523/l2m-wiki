@@ -8,7 +8,7 @@
   --g0:#6b7385; --g2:#2a8039; --g3:#2563c4; --g4:#c22d2a; --g5:#7c41c7;
   --c-start:#2a8039; --c-hunt:#a86c00; --c-test:#2563c4; --c-class:#c22d2a; --c-info:#7c41c7; --c-update:#0b8484;
   --rail-bg:#ffffff; --top-bg:rgba(255,255,255,.94); --stat-bg:rgba(255,255,255,.7);
-  --nt-all:#c75f08; --nt-tip:#0b8484; --nt-guide:#c75f08; --nt-video:#7c41c7; --nt-bug:#c22d2a; --nt-paper:#fff5c4; --nt-paper-ink:#4a3d00;
+  --nt-all:#c75f08; --nt-tip:#0b8484; --nt-guide:#c75f08; --nt-video:#7c41c7; --nt-bug:#c22d2a; --nt-suggest:#2563c4; --nt-paper:#fff5c4; --nt-paper-ink:#4a3d00;
   --font-ui:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   --font-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
   --r:10px; --rail:64px; --top:56px; --tabs:46px;
@@ -20,7 +20,7 @@
   --g0:#8e95a8; --g2:#5cc06b; --g3:#5c9cf5; --g4:#f06a64; --g5:#b689f5;
   --c-start:#5cc06b; --c-hunt:#f0b03c; --c-test:#5c9cf5; --c-class:#f06a64; --c-info:#b689f5; --c-update:#3cc8c8;
   --rail-bg:#08090b; --top-bg:rgba(11,12,15,.92); --stat-bg:rgba(0,0,0,.28);
-  --nt-all:#ff9d2e; --nt-tip:#3cc8c8; --nt-guide:#ff9d2e; --nt-video:#b689f5; --nt-bug:#f06a64; --nt-paper:#3a3216; --nt-paper-ink:#f3e7b0;
+  --nt-all:#ff9d2e; --nt-tip:#3cc8c8; --nt-guide:#ff9d2e; --nt-video:#b689f5; --nt-bug:#f06a64; --nt-suggest:#5c9cf5; --nt-paper:#3a3216; --nt-paper-ink:#f3e7b0;
   color-scheme:dark;
 }
 *{box-sizing:border-box}

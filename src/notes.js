@@ -14,23 +14,26 @@
   const API = `https://api.github.com/repos/${C.repo}`;
   const RAW = `https://raw.githubusercontent.com/${C.repo}/${C.branch}/`;
 
+  // report: types that end in a message to the game company (copy button + "sent" checkbox)
   const TYPES = {
-    tip:   { name: '팁' },
-    guide: { name: '공략' },
-    video: { name: '영상' },
-    bug:   { name: '버그·수정요청' },
+    guide:   { name: '팁·공략' },
+    video:   { name: '영상' },
+    bug:     { name: '버그·수정요청', report: { head: '[리니지2M 버그 제보]', copy: '제보문 복사', check: '게임사에 제보함', done: '제보함' } },
+    suggest: { name: '제안', report: { head: '[리니지2M 개선 제안]', copy: '제안문 복사', check: '게임사에 전달함', done: '전달함' } },
   };
+  // older notes used a separate "tip" type; it is now part of 팁·공략
+  const normalize = list => (Array.isArray(list) ? list : []).map(n => n.type === 'tip' ? { ...n, type: 'guide' } : n);
   const COLS = [['idea', '번뜩임'], ['draft', '정리 중'], ['done', '완료']];
   // fields to flesh out a note, per type; progress = filled / total
   const GUIDE_TPL = [['summary', '한 줄 요약'], ['when', '언제 쓰는 팁인가요'], ['proof', '근거 (스샷 설명, 수치)'], ['caution', '주의할 점'], ['video', '관련 영상 주소']];
   const TPL = {
-    tip: GUIDE_TPL,
     guide: GUIDE_TPL,
     video: [['thumb', '썸네일 문구'], ['scenes', '핵심 장면'], ['script', '대본 한 줄'], ['refs', '참고 자료']],
     bug: [['where', '발생 위치와 상황'], ['steps', '재현 방법'], ['expected', '기대한 동작'], ['actual', '실제 동작'], ['when', '발생 일시와 서버']],
+    suggest: [['what', '무엇을 제안하나요'], ['pain', '지금 불편한 점'], ['idea', '이렇게 바뀌면 좋겠다'], ['effect', '바뀌면 좋아지는 점'], ['refs', '참고 자료 (스샷 설명, 다른 게임 사례)']],
   };
 
-  const state = { notes: [], token: store.get(TOKEN_KEY), type: 'tip', filter: 'all', tag: null, q: '', col: 'idea', open: null, file: null, loaded: false };
+  const state = { notes: [], token: store.get(TOKEN_KEY), type: 'guide', filter: 'all', tag: null, q: '', col: 'idea', open: null, file: null, loaded: false };
   let queue = Promise.resolve();
 
   // ---------- helpers ----------
@@ -62,13 +65,13 @@
     if (state.token){
       try {
         const j = await gh(`/contents/${C.file}?ref=${C.branch}&t=${Date.now()}`);
-        return { notes: JSON.parse(decode(j.content)), sha: j.sha };
+        return { notes: normalize(JSON.parse(decode(j.content))), sha: j.sha };
       } catch (e){ if (e.status === 404) return { notes: [], sha: null }; throw e; }
     }
     const r = await fetch(RAW + C.file + '?t=' + Date.now(), { cache: 'no-store' });
     if (r.status === 404) return { notes: [], sha: null };
     if (!r.ok) throw new Error('read ' + r.status);
-    return { notes: await r.json(), sha: null };
+    return { notes: normalize(await r.json()), sha: null };
   }
   const putFile = (path, b64, message, sha) => gh(`/contents/${path}`, { method: 'PUT', body: JSON.stringify({ message, content: b64, branch: C.branch, ...(sha ? { sha } : {}) }) });
 
@@ -144,7 +147,7 @@
       const list = show.filter(n => n.status === k);
       return `<section class="nt-col" data-status="${k}">
         <h3>${v} <span>${list.length}</span></h3>
-        <div class="nt-drop">${list.length ? list.map(card).join('') : `<p class="nt-empty">${!state.loaded ? '불러오는 중…' : k === 'idea' ? (editable ? '떠오른 걸 위 칸에 한 줄로 적어 보세요.' : '아직 메모가 없습니다.') : k === 'draft' ? '살을 붙이고 있는 메모가 여기에 옵니다.' : '공략으로 올렸거나 제보를 마친 메모가 여기에 옵니다.'}</p>`}</div>
+        <div class="nt-drop">${list.length ? list.map(card).join('') : `<p class="nt-empty">${!state.loaded ? '불러오는 중…' : k === 'idea' ? (editable ? '떠오른 걸 위 칸에 한 줄로 적어 보세요.' : '아직 메모가 없습니다.') : k === 'draft' ? '살을 붙이고 있는 메모가 여기에 옵니다.' : '공략으로 올렸거나 제보·제안을 마친 메모가 여기에 옵니다.'}</p>`}</div>
       </section>`;
     }).join('');
   }
@@ -155,7 +158,7 @@
       <h4>${esc(title(n.text))}</h4>
       ${(n.tags || []).length ? `<div class="nt-tags">${n.tags.map(x => `<span>#${esc(x)}</span>`).join('')}</div>` : ''}
       ${n.status === 'draft' ? `<div class="nt-prog" title="채운 항목 ${d}/${t}"><i style="width:${t ? d / t * 100 : 0}%"></i></div>` : ''}
-      <div class="nt-meta">${day(n.updated || n.created)}${(n.images || []).length ? ` · 사진 ${n.images.length}` : ''}${n.status === 'draft' ? ` · ${d}/${t}` : ''}${n.guide ? ' · 공략 게시' : ''}${n.reported ? ' · 제보함' : ''}</div>
+      <div class="nt-meta">${day(n.updated || n.created)}${(n.images || []).length ? ` · 사진 ${n.images.length}` : ''}${n.status === 'draft' ? ` · ${d}/${t}` : ''}${n.guide ? ' · 공략 게시' : ''}${n.reported && TYPES[n.type] && TYPES[n.type].report ? ' · ' + TYPES[n.type].report.done : ''}</div>
     </article>`;
   }
 
@@ -175,14 +178,14 @@
       <div class="nt-steps" role="group" aria-label="단계">${COLS.map(([k, v]) => `<button type="button" data-sstatus="${k}" aria-pressed="${n.status === k}"${ro}>${v}</button>`).join('')}</div>
       <h5>살 붙이기 <span id="shProg">${progress(n).join('/')}</span></h5>
       ${fields.map(([k, label]) => `<label class="nt-f"><span>${label}</span><textarea data-field="${k}" rows="${k === 'video' || k === 'thumb' || k === 'summary' ? 1 : 2}"${ro}>${esc((n.fields || {})[k] || '')}</textarea></label>`).join('')}
-      ${n.type === 'bug' ? `<label class="nt-check"><input type="checkbox" id="shReported"${n.reported ? ' checked' : ''}${ro}>게임사에 제보함</label>` : ''}
+      ${TYPES[n.type] && TYPES[n.type].report ? `<label class="nt-check"><input type="checkbox" id="shReported"${n.reported ? ' checked' : ''}${ro}>${TYPES[n.type].report.check}</label>` : ''}
       <h5>사진 <span>${(n.images || []).length}</span></h5>
       <div class="nt-imgs">${(n.images || []).map(p => `<a href="${imgUrl(p)}" target="_blank" rel="noopener"><img src="${imgUrl(p)}" alt="첨부 사진" loading="lazy"></a>`).join('')}
         ${state.token ? `<label class="nt-addimg">＋ 사진 추가<input type="file" accept="image/*" id="shFile" hidden></label>` : ''}</div>
       ${n.guide ? `<p class="nt-done">공략으로 게시했습니다 · <a href="../guides/${esc(n.guide)}.html">공략 보기</a> (올린 직후에는 2~3분 걸립니다)</p>` : ''}
       ${state.token ? `<div class="nt-acts">
-        ${n.type === 'bug' ? `<button type="button" class="mx-btn" data-copybug>제보문 복사</button>` : ''}
-        ${n.guide ? '' : `<span class="nt-promote"><select id="shCat" aria-label="공략 주제">${C.cats.map(c => `<option${c === (n.type === 'bug' ? '업데이트' : '정보') ? ' selected' : ''}>${c}</option>`).join('')}</select><button type="button" class="mx-btn primary" data-promote>공략으로 올리기</button></span>`}
+        ${TYPES[n.type] && TYPES[n.type].report ? `<button type="button" class="mx-btn" data-copybug>${TYPES[n.type].report.copy}</button>` : ''}
+        ${n.guide ? '' : `<span class="nt-promote"><select id="shCat" aria-label="공략 주제">${C.cats.map(c => `<option${c === (n.type === 'bug' || n.type === 'suggest' ? '업데이트' : '정보') ? ' selected' : ''}>${c}</option>`).join('')}</select><button type="button" class="mx-btn${TYPES[n.type] && TYPES[n.type].report ? '' : ' primary'}" data-promote>공략으로 올리기</button></span>`}
         <button type="button" class="mx-btn nt-del" data-del>삭제</button>
       </div>` : ''}
       <p class="nt-sh-msg" id="shMsg" role="status"></p>`;
@@ -248,9 +251,10 @@
     }
   }
 
+  // text to paste into the game company's support form (bugs and suggestions)
   function bugText(n){
-    const f = n.fields || {};
-    return [`[리니지2M 버그 제보] ${title(n.text)}`, ...TPL.bug.map(([k, l]) => `- ${l}: ${f[k] || '-'}`), n.text.split('\n').slice(1).join('\n').trim()].filter(Boolean).join('\n');
+    const f = n.fields || {}, t = TYPES[n.type] || TYPES.bug;
+    return [`${t.report.head} ${title(n.text)}`, ...(TPL[n.type] || []).map(([k, l]) => `- ${l}: ${f[k] || '-'}`), n.text.split('\n').slice(1).join('\n').trim()].filter(Boolean).join('\n');
   }
 
   // ---------- load + events ----------
@@ -340,7 +344,7 @@
     if (e.target.closest('[data-promote]')){ promote(); return; }
     if (e.target.closest('[data-copybug]')){
       const n = collect() || state.notes.find(x => x.id === state.open), msg = $('#shMsg');
-      navigator.clipboard.writeText(bugText(n)).then(() => { msg.textContent = '제보문을 복사했습니다. 고객센터 문의 칸에 붙여 넣으세요.'; }, () => { msg.textContent = '복사하지 못했습니다. 브라우저 설정을 확인해 주세요.'; });
+      navigator.clipboard.writeText(bugText(n)).then(() => { msg.textContent = (n.type === 'suggest' ? '제안문' : '제보문') + '을 복사했습니다. 고객센터 문의 칸에 붙여 넣으세요.'; }, () => { msg.textContent = '복사하지 못했습니다. 브라우저 설정을 확인해 주세요.'; });
       return;
     }
     const del = e.target.closest('[data-del]');

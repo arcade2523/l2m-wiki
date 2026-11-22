@@ -418,7 +418,7 @@ function alchemyPage(){
 // Idea board. Notes live in the repository (notes/notes.json) and are read and written from the
 // browser through the GitHub API, so this page needs no rebuild when a note changes.
 function notesPage(){
-  const types = [['tip', '팁'], ['guide', '공략'], ['video', '영상'], ['bug', '버그·수정요청']];
+  const types = [['guide', '팁·공략'], ['video', '영상'], ['bug', '버그·수정요청'], ['suggest', '제안']];
   page({ file: 'notes/index.html', nav: 'notes', title: '아이디어 노트', desc: '게임하다 떠오른 공략·영상·버그 메모를 모아 두는 보드.', body: `
 <div class="mx-pagehead">
   <h1>아이디어 노트</h1>
