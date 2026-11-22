@@ -86,6 +86,9 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
 .slot:hover{border-color:var(--muted)}
 .slot[aria-selected="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
 .slot .sl{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+.mk.guess svg{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linejoin:round}
+.slot .tag.guess{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink);border-radius:5px}
+.slot .tag.guess svg{fill:none;stroke:currentColor;stroke-width:2.4}
 .slot .sl .tags{display:inline-flex;flex-wrap:wrap;gap:3px;margin-left:auto}
 .slot .tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:1px 7px 1px 5px;border-radius:5px;background:var(--ink);color:var(--surface);white-space:nowrap}
 .slot .tag svg{width:11px;height:11px;fill:currentColor}
@@ -229,7 +232,8 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
         <span class="it"><i class="mk" style="--mc:var(--muted)"><svg><use href="#m-stone"/></svg></i>= 마력석</span>
         <span class="it"><i class="mk" style="--mc:var(--muted)"><svg><use href="#m-rune"/></svg></i>= 룬</span>
         <span class="it"><i class="mk" style="--mc:var(--muted)"><svg><use href="#m-pend"/></svg></i>= 펜던트</span>
-        <span style="color:var(--muted)">이(가) 나오는 슬롯</span></span>
+        <span style="color:var(--muted)">이(가) 나오는 슬롯</span>
+        <span class="it"><i class="mk guess" style="--mc:var(--muted)"><svg><use href="#m-rune"/></svg></i>속이 빈 표식 = 원본 사이트 표시만 있고 확률 목록에는 없음(추정)</span></span>
     </div>
     <nav class="rail" id="rail" aria-label="연금 단계"></nav>
     <div class="panel" id="detail"></div>
@@ -276,8 +280,8 @@ const CAT = {all:'전체',wp:'무기',ar:'방어구',acc:'장신구',book:'스�
 const GRADE = {0:['기타','--g0'],1:['일반','--g0'],2:['고급','--g2'],3:['희귀','--g3'],4:['영웅','--g4'],5:['전설','--g5']};
 // special items a slot can give (from the source site's slot icons); 영웅↑/전설↑ icons are shown by the dot colour instead
 const SPECIAL = { stone: { name: '마력석', icon: 'm-stone', subj: '마력석이' }, rune: { name: '룬', icon: 'm-rune', subj: '룬이' }, pend: { name: '펜던트', icon: 'm-pend', subj: '펜던트가' } };
-// specials for one slot: the source site's slot icon first, then any found in the slot's probability data
-const specialsOf = (r, k) => [...new Set([r.marks[k], ...((r.sp && r.sp[k]) || [])].filter(m => SPECIAL[m]))];
+// specials that really are in the slot's probability list (solid symbol)
+const dataSpecials = (r, k) => ((r.sp && r.sp[k]) || []).filter(m => SPECIAL[m]);
 // specials the slot icon promises but the probability data does not contain (their share is missing from the list)
 const missingSpecials = (r, k) => SPECIAL[r.marks[k]] && !((r.sp && r.sp[k]) || []).includes(r.marks[k]) ? [r.marks[k]] : [];
 const $ = s => document.querySelector(s);
@@ -328,9 +332,11 @@ function grouped(entries){
 // one dot per slot: colour = highest grade in the slot's data, symbol = special item
 function slotDot(r, k){
   const g = r.has ? r.slots[k].reduce((m, [i]) => Math.max(m, ITEMS[i][2]), -1) : -1;
-  const sps = specialsOf(r, k), sp = SPECIAL[sps[0]];
-  const tip = `슬롯 ${k+1}: ${g >= 0 ? '최고 ' + GRADE[g][0] : '데이터 없음'}${sps.length ? ' · ' + sps.map(m => SPECIAL[m].name).join('·') + ' 나옴' : ''}`;
-  return `<i class="mk${g < 0 ? ' none' : ''}" style="--mc:${g >= 0 ? gvar(g) : 'var(--sunken)'}" title="${tip}" aria-label="${tip}">${sp ? `<svg aria-hidden="true"><use href="#${sp.icon}"/></svg>` : ''}</i>`;
+  const have = dataSpecials(r, k), guess = missingSpecials(r, k);
+  const show = SPECIAL[have[0] || guess[0]], isGuess = !have.length && guess.length > 0;
+  const parts = [...have.map(m => SPECIAL[m].name + ' 나옴'), ...guess.map(m => SPECIAL[m].name + ' 추정(원본 표시만 있고 목록에는 없음)')];
+  const tip = `슬롯 ${k+1}: ${g >= 0 ? '최고 ' + GRADE[g][0] : '데이터 없음'}${parts.length ? ' · ' + parts.join(' · ') : ''}`;
+  return `<i class="mk${g < 0 ? ' none' : ''}${isGuess ? ' guess' : ''}" style="--mc:${g >= 0 ? gvar(g) : 'var(--sunken)'}" title="${tip}" aria-label="${tip}">${show ? `<svg aria-hidden="true"><use href="#${show.icon}"/></svg>` : ''}</i>`;
 }
 
 function renderRail(){
@@ -366,7 +372,7 @@ function renderDetail(){
     const mk = r.marks[k];
     const share = present.map(g => `${GRADE[g][0]} ${pct(gs[g])}`).join(' · ');
     return `<button class="slot" role="tab" data-s="${k}" aria-selected="${k === state.slot}" title="${share}">
-      <span class="sl">슬롯 ${k+1}<span class="tags">${specialsOf(r, k).map(m => `<span class="tag"><svg aria-hidden="true"><use href="#${SPECIAL[m].icon}"/></svg>${SPECIAL[m].name}</span>`).join('')}</span></span>
+      <span class="sl">슬롯 ${k+1}<span class="tags">${dataSpecials(r, k).map(m => `<span class="tag"><svg aria-hidden="true"><use href="#${SPECIAL[m].icon}"/></svg>${SPECIAL[m].name}</span>`).join('')}${missingSpecials(r, k).map(m => `<span class="tag guess" title="원본 사이트에는 표시되지만 확률 목록에는 없습니다"><svg aria-hidden="true"><use href="#${SPECIAL[m].icon}"/></svg>${SPECIAL[m].name} 추정</span>`).join('')}</span></span>
       <span class="best" style="color:${best ? gvar(ITEMS[best.i][2]) : 'inherit'}">${best ? esc(ITEMS[best.i][0]) : '—'}</span>
       <span class="gbar" aria-hidden="true">${present.map(g => `<i style="width:${gs[g]/(sum||1)*100}%;background:${gvar(g)}"></i>`).join('')}</span>
       <span class="bp num">${top != null ? `<b style="color:${gvar(top)}">${GRADE[top][0]}</b>${pct(gs[top])}` : '—'}</span>
