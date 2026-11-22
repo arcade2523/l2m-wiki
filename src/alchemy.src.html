@@ -56,12 +56,15 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
 .rcard.nodata{opacity:.55}
 
 /* slot markers */
-.mk{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--sunken);border:1px solid var(--line)}
-.mk.rune{background:var(--accent);border-color:var(--accent)}
-.mk.epic{background:var(--g4);border-color:var(--g4)}
-.mk.legend{background:var(--g5);border-color:var(--g5)}
-.mk.pend{background:var(--g3);border-color:var(--g3)}
-.mk.stone{background:var(--g2);border-color:var(--g2)}
+/* slot dots: colour = highest grade that slot can give; a white symbol inside marks 마력석 / 룬 / 펜던트 */
+.mk{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--mc,var(--sunken));color:#fff;flex:none}
+.mk.none{border:1px solid var(--line)}
+.mk svg{width:14px;height:14px;fill:currentColor}
+.mklegend{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-size:13.5px}
+.mklegend .lg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.mklegend .lg > b{font-weight:700;margin-right:2px}
+.mklegend .it{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.mklegend .sep{width:1px;align-self:stretch;background:var(--line)}
 
 /* detail */
 .panel{background:var(--surface);border-radius:14px;border:1px solid var(--line);padding:20px;min-width:0}
@@ -83,8 +86,8 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
 .slot:hover{border-color:var(--muted)}
 .slot[aria-selected="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
 .slot .sl{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;color:var(--muted)}
-.slot .tag{font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;color:#fff}
-.tag.rune{background:var(--accent);color:var(--accent-ink)} .tag.epic{background:var(--g4)} .tag.legend{background:var(--g5)} .tag.pend{background:var(--g3)} .tag.stone{background:var(--g2)}
+.slot .tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:1px 7px 1px 5px;border-radius:5px;background:var(--ink);color:var(--surface);white-space:nowrap}
+.slot .tag svg{width:11px;height:11px;fill:currentColor}
 .kbadge{font-size:11px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--sunken);color:var(--muted);white-space:nowrap}
 .kbadge.advanced{background:var(--accent-soft);color:var(--accent)}
 .slot .best{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -167,11 +170,13 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
 @media (max-width:860px){
   .bench{grid-template-columns:minmax(0,1fr)}
   .rail{position:static;max-height:none;flex-direction:row;overflow-x:auto;padding:0 0 6px}
-  .rcard{grid-template-columns:auto;min-width:76px;justify-items:center;padding:8px}
+  .rcard{grid-template-columns:auto;min-width:96px;justify-items:center;padding:8px}
   .rcard .step{grid-row:auto;width:40px}
   .rcard .mat{display:none}
   .rcard .marks{gap:3px}
-  .rcard .mk{width:9px;height:9px}
+  .rcard .mk{width:14px;height:14px}
+  .rcard .mk svg{width:9px;height:9px}
+  .mklegend .sep{display:none}
   .slots{grid-template-columns:repeat(5,minmax(96px,1fr));overflow-x:auto}
   .panel{padding:14px}
 }
@@ -184,6 +189,9 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
   <symbol id="i-acc" viewBox="0 0 24 24"><circle cx="12" cy="14" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path fill="currentColor" d="M9 3h6l-3 4z"/></symbol>
   <symbol id="i-book" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h11"/></symbol>
   <symbol id="i-etc" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3l7 9-7 9-7-9z"/></symbol>
+  <symbol id="m-stone" viewBox="0 0 24 24"><path d="M7 3.5h10l4.5 5.5L12 21 2.5 9z"/><path d="M2.5 9h19M9.5 3.5 12 9l2.5-5.5M12 9v11" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  <symbol id="m-rune" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z"/></symbol>
+  <symbol id="m-pend" viewBox="0 0 24 24"><path d="M8 2.5l4 5 4-5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="15" r="6.5"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M20 20l-4.5-4.5"/></symbol>
 </svg>
 
@@ -202,6 +210,19 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
 
 <main class="gutter">
   <section id="recipeView" class="bench">
+    <div class="mklegend" aria-label="동그라미 설명">
+      <span class="lg"><b>동그라미 색</b>그 슬롯에서 나오는 가장 높은 등급
+        <span class="it"><i class="mk" style="--mc:var(--g5)"></i>전설</span>
+        <span class="it"><i class="mk" style="--mc:var(--g4)"></i>영웅</span>
+        <span class="it"><i class="mk" style="--mc:var(--g3)"></i>희귀</span>
+        <span class="it"><i class="mk" style="--mc:var(--g2)"></i>고급</span></span>
+      <span class="sep" aria-hidden="true"></span>
+      <span class="lg"><b>동그라미 안 표식</b>
+        <span class="it"><i class="mk" style="--mc:var(--muted)"><svg><use href="#m-stone"/></svg></i>= 마력석</span>
+        <span class="it"><i class="mk" style="--mc:var(--muted)"><svg><use href="#m-rune"/></svg></i>= 룬</span>
+        <span class="it"><i class="mk" style="--mc:var(--muted)"><svg><use href="#m-pend"/></svg></i>= 펜던트</span>
+        <span style="color:var(--muted)">이(가) 나오는 슬롯</span></span>
+    </div>
     <nav class="rail" id="rail" aria-label="연금 단계"></nav>
     <div class="panel" id="detail"></div>
   </section>
@@ -245,7 +266,8 @@ const KIND_HASH = { normal: 'r', advanced: 'a' };
 const ENCS = [...new Set(Object.values(KINDS).flatMap(rs => rs.flatMap(r => r.slots.flat().map(e => e[1]))))].sort((a,b) => a-b).map(String);
 const CAT = {all:'전체',wp:'무기',ar:'방어구',acc:'장신구',book:'스킬북',etc:'기타'};
 const GRADE = {0:['기타','--g0'],1:['일반','--g0'],2:['고급','--g2'],3:['희귀','--g3'],4:['영웅','--g4'],5:['전설','--g5']};
-const MARK = {rune:'룬',epic:'영웅↑',legend:'전설↑',pend:'펜던트',stone:'마력석'};
+// special items a slot can give (from the source site's slot icons); 영웅↑/전설↑ icons are shown by the dot colour instead
+const SPECIAL = { stone: { name: '마력석', icon: 'm-stone' }, rune: { name: '룬', icon: 'm-rune' }, pend: { name: '펜던트', icon: 'm-pend' } };
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pct = v => { const p = v/10000; return (p >= 1 ? p.toFixed(2) : p >= .01 ? p.toFixed(3) : p.toFixed(4)) + '%'; };
@@ -291,11 +313,19 @@ function grouped(entries){
   return arr.sort((a,b) => b.total - a.total);
 }
 
+// one dot per slot: colour = highest grade in the slot's data, symbol = special item
+function slotDot(r, k){
+  const g = r.has ? r.slots[k].reduce((m, [i]) => Math.max(m, ITEMS[i][2]), -1) : -1;
+  const sp = SPECIAL[r.marks[k]];
+  const tip = `슬롯 ${k+1}: ${g >= 0 ? '최고 ' + GRADE[g][0] : '데이터 없음'}${sp ? ' · ' + sp.name + ' 나옴' : ''}`;
+  return `<i class="mk${g < 0 ? ' none' : ''}" style="--mc:${g >= 0 ? gvar(g) : 'var(--sunken)'}" title="${tip}" aria-label="${tip}">${sp ? `<svg aria-hidden="true"><use href="#${sp.icon}"/></svg>` : ''}</i>`;
+}
+
 function renderRail(){
   $('#rail').innerHTML = recipes().map(r => `
     <button class="rcard${r.has ? '' : ' nodata'}" data-r="${r.n}" aria-current="${r.n === state.recipe}">
       <span class="step">${r.n}</span>
-      <span class="marks" aria-label="슬롯 표시">${r.marks.map(m => `<i class="mk ${m}" title="${MARK[m] || ''}"></i>`).join('')}</span>
+      <span class="marks">${r.marks.map((m, k) => slotDot(r, k)).join('')}</span>
       <span class="mat">${r.mats.length ? esc(matText(r.mats[0])) + (r.mats.length > 1 ? ` 외 ${r.mats.length-1}` : '') : '재료 정보 없음'}</span>
     </button>`).join('');
 }
@@ -324,7 +354,7 @@ function renderDetail(){
     const mk = r.marks[k];
     const share = present.map(g => `${GRADE[g][0]} ${pct(gs[g])}`).join(' · ');
     return `<button class="slot" role="tab" data-s="${k}" aria-selected="${k === state.slot}" title="${share}">
-      <span class="sl">슬롯 ${k+1}${mk ? `<span class="tag ${mk}">${MARK[mk]}</span>` : ''}</span>
+      <span class="sl">슬롯 ${k+1}${SPECIAL[mk] ? `<span class="tag"><svg aria-hidden="true"><use href="#${SPECIAL[mk].icon}"/></svg>${SPECIAL[mk].name}</span>` : ''}</span>
       <span class="best" style="color:${best ? gvar(ITEMS[best.i][2]) : 'inherit'}">${best ? esc(ITEMS[best.i][0]) : '—'}</span>
       <span class="gbar" aria-hidden="true">${present.map(g => `<i style="width:${gs[g]/(sum||1)*100}%;background:${gvar(g)}"></i>`).join('')}</span>
       <span class="bp num">${top != null ? `<b style="color:${gvar(top)}">${GRADE[top][0]}</b>${pct(gs[top])}` : '—'}</span>
