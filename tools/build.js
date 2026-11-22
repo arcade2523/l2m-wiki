@@ -7,6 +7,8 @@ const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const json = f => JSON.parse(read(f));
+// cache-buster for site.css / site.js / notes.js so visitors get the new files right after a deploy
+const BUILD = Date.now().toString(36);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 const SITE = {
@@ -15,6 +17,8 @@ const SITE = {
   desc: '리니지2M을 처음 시작하는 분부터 오래 한 분까지, 직접 실험하고 정리한 공략과 도구를 한곳에 모았습니다.',
   youtube: 'https://www.youtube.com/channel/UCDfaOyaSG0VrCfqWd6YVeUQ',
   blog: 'https://tobebetter32.tistory.com/',
+  repo: 'arcade2523/l2m-wiki',        // GitHub repository the site (and the idea notes) live in
+  branch: 'main',
 };
 
 // ---------- data ----------
@@ -78,6 +82,8 @@ const I = {
   yt: '<path fill="currentColor" d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.200 0-7.800.4A2.500 2.500 0 0 0 2.400 7.200 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.800 2.500 2.500 0 0 0 1.800 1.800C5.800 19 12 19 12 19s6.200 0 7.800-.4a2.500 2.500 0 0 0 1.800-1.800A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.800ZM10 15V9l5.200 3Z"/>',
   blog: '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',
   play: '<path fill="currentColor" d="M6 4l14 8-14 8z"/>',
+  notes: '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.500 10.900c.600.500 1 1.200 1 2.100h5c0-.900.400-1.600 1-2.100A6 6 0 0 0 12 3z"/>',
+  camera: '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.500" fill="none" stroke="currentColor" stroke-width="2"/>',
   moon: '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M20 14.5A8 8 0 0 1 9.500 4a8 8 0 1 0 10.500 10.500Z"/>',
   sun: '<circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.500 1.500M17.500 17.500L19 19M5 19l1.500-1.500M17.500 6.500L19 5"/>',
 };
@@ -92,6 +98,7 @@ const NAV = [
   { id: 'videos', label: '영상', href: 'videos/index.html' },
   { id: 'trade', label: '거래소', href: 'trade/index.html' },
   { id: 'clan', label: '혈맹 모집', href: 'clan/index.html' },
+  { id: 'notes', label: '아이디어 노트', href: 'notes/index.html' },
 ];
 
 // ---------- layout ----------
@@ -108,7 +115,7 @@ function page({ file, nav, title, desc, body, head = '', scripts = '' }){
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="${R}assets/site.css">
+<link rel="stylesheet" href="${R}assets/site.css?v=${BUILD}">
 <script>try{if(localStorage.getItem('l2mwiki-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}</script>
 ${head}</head>
 <body>
@@ -143,7 +150,7 @@ ${body.replace(/\{\{ROOT\}\}/g, R)}
     <a href="${SITE.youtube}" target="_blank" rel="noopener">유튜브 오락실</a> · <a href="${SITE.blog}" target="_blank" rel="noopener">티스토리 블로그</a> · <a href="${R}admin/index.html">관리자</a>
   </footer>
 </div>
-<script src="${R}assets/site.js"></script>
+<script src="${R}assets/site.js?v=${BUILD}"></script>
 ${scripts.replace(/\{\{ROOT\}\}/g, R)}</body>
 </html>`;
   const out = path.join(DIST, file);
@@ -408,11 +415,53 @@ function alchemyPage(){
     head: `<style>${css}</style>\n`, body: markup, scripts: script + '\n' });
 }
 
+// Idea board. Notes live in the repository (notes/notes.json) and are read and written from the
+// browser through the GitHub API, so this page needs no rebuild when a note changes.
+function notesPage(){
+  const types = [['tip', '팁'], ['guide', '공략'], ['video', '영상'], ['bug', '버그·수정요청']];
+  page({ file: 'notes/index.html', nav: 'notes', title: '아이디어 노트', desc: '게임하다 떠오른 공략·영상·버그 메모를 모아 두는 보드.', body: `
+<div class="mx-pagehead">
+  <h1>아이디어 노트</h1>
+  <p>게임하다 떠오른 걸 한 줄로 붙여 두고, 나중에 살을 붙여 공략이나 영상으로 만듭니다. 카드를 끌어서 다음 칸으로 옮기고, 눌러서 자세히 씁니다.</p>
+</div>
+<div class="nt-auth" id="ntAuth">
+  <p><b>보기 전용입니다.</b> 이 기기에서 메모를 쓰려면 관리자 글쓰기에 쓰는 GitHub 토큰을 한 번 입력하세요. 토큰은 이 브라우저에만 저장됩니다.</p>
+  <form id="ntConnect">
+    <input class="mx-input" type="password" id="ntToken" placeholder="github_pat_로 시작하는 토큰" autocomplete="off" aria-label="GitHub 토큰">
+    <button class="mx-btn primary">연결</button>
+    <span class="err" id="ntAuthErr" role="alert"></span>
+  </form>
+</div>
+<form class="nt-quick" id="ntQuick" hidden>
+  <input type="text" id="ntText" placeholder="떠오른 걸 한 줄로 (예: 상아탑 3층 자폭 피하는 자리 #상아탑)" autocomplete="off" aria-label="한 줄 메모">
+  <div class="nt-types" id="ntTypes" role="group" aria-label="분류">
+    ${types.map(([k, v], i) => `<button type="button" data-type="${k}" aria-pressed="${i === 0}" style="--tc:var(--nt-${k})">${v}</button>`).join('')}
+  </div>
+  <label class="nt-photo">${svg('camera')}사진<input type="file" id="ntFile" accept="image/*" hidden></label>
+  <span class="nt-filename" id="ntFileName"></span>
+  <button class="mx-btn primary">붙이기</button>
+  <p class="nt-status" id="ntStatus" role="status"></p>
+</form>
+<div class="nt-bar">
+  <div class="mx-chips" id="ntFilter" aria-label="분류와 태그로 거르기"></div>
+  <label class="mx-search" style="max-width:260px">${svg('search')}<input type="search" id="ntSearch" placeholder="메모 찾기" aria-label="메모 찾기" autocomplete="off"></label>
+  <span class="nt-signed" id="ntSignedIn" hidden>편집 가능 <button type="button" id="ntSignOut">이 기기 연결 끊기</button></span>
+</div>
+<div class="nt-tabs" id="ntTabs" role="group" aria-label="단계"></div>
+<div class="nt-board" id="ntBoard"></div>
+<div class="nt-sheet" id="ntSheet" hidden><div class="nt-sheet-in" id="ntSheetBody" role="dialog" aria-label="메모 자세히"></div></div>`,
+    head: '<meta name="robots" content="noindex">\n',
+    scripts: `<script>window.NT_CONFIG = ${JSON.stringify({ repo: SITE.repo, branch: SITE.branch, file: 'notes/notes.json', imgDir: 'notes/images', cats: Object.values(CATS).map(c => c.name) })};</script>
+<script src="{{ROOT}}assets/notes.js?v=${BUILD}"></script>
+` });
+}
+
 // ---------- run ----------
 fs.rmSync(DIST, { recursive: true, force: true });
 fs.mkdirSync(path.join(DIST, 'assets'), { recursive: true });
 fs.cpSync(path.join(ROOT, 'public'), DIST, { recursive: true });
 fs.copyFileSync(path.join(ROOT, 'src', 'site.css'), path.join(DIST, 'assets', 'site.css'));
 fs.copyFileSync(path.join(ROOT, 'src', 'site.js'), path.join(DIST, 'assets', 'site.js'));
-home(); startPage(); guidesSection(); blogSection(); searchPage(); videosPage(); boardPage('trade'); boardPage('clan'); alchemyPage();
+fs.copyFileSync(path.join(ROOT, 'src', 'notes.js'), path.join(DIST, 'assets', 'notes.js'));
+home(); startPage(); guidesSection(); blogSection(); searchPage(); videosPage(); boardPage('trade'); boardPage('clan'); alchemyPage(); notesPage();
 console.log(`built ${guides.length} guides, ${posts.length} blog posts, ${videos.length} videos → dist/`);

@@ -4,6 +4,9 @@ name: Deploy site
 on:
   push:
     branches: [main]
+    # idea notes are read live from the repository, so saving one does not need a rebuild
+    paths-ignore:
+      - "notes/**"
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:
