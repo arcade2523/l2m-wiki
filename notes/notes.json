@@ -1,5 +1,16 @@
 [
  {
+  "id": "nmwreshrt",
+  "type": "tip",
+  "status": "idea",
+  "text": "시크릿 박스를 가상으로 돌려보는 시뮬레이션",
+  "tags": [],
+  "fields": {},
+  "images": [],
+  "created": "2026-11-22T05:41:15.641Z",
+  "updated": "2026-11-22T05:41:15.641Z"
+ },
+ {
   "id": "nmwrepjj4",
   "type": "bug",
   "status": "idea",
