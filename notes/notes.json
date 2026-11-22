@@ -1,7 +1,18 @@
 [
  {
+  "id": "nmwrk85q0",
+  "type": "suggest",
+  "status": "idea",
+  "text": "1.거래소호흡기  2.컨텐츠 전장 스펙보정  3.패키지 완화",
+  "tags": [],
+  "fields": {},
+  "images": [],
+  "created": "2026-11-22T08:13:24.600Z",
+  "updated": "2026-11-22T08:13:24.600Z"
+ },
+ {
   "id": "nmwrfqn5x",
-  "type": "tip",
+  "type": "guide",
   "status": "idea",
   "text": "기간제 쾌속성장의 바람물약을 잠그면, BBQ치킨버프가 활성화 됨.",
   "tags": [],
@@ -12,7 +23,7 @@
  },
  {
   "id": "nmwreshrt",
-  "type": "tip",
+  "type": "guide",
   "status": "idea",
   "text": "시크릿 박스를 가상으로 돌려보는 시뮬레이션",
   "tags": [],
