@@ -234,7 +234,7 @@ main{max-width:1240px;margin:0 auto;padding-block:20px 48px}
     </tr></thead><tbody id="findBody"></tbody></table></div>
   </section>
 
-  <p class="foot">데이터 출처: purple2m.github.io 연금 데이터(2023년 기준) · 아이템 등급은 아이콘 파일명에서 추정한 값입니다 · 슬롯 확률 합계가 100%에 못 미치는 경우 원본 데이터에 빠진 항목이 있는 것입니다(상급 연금에서 특히 많음) · 일반 연금 2~7단계는 원본 사이트에 상세 데이터가 없고, 상급 연금은 일부 단계의 재료 정보가 없습니다.</p>
+  <p class="foot">데이터 출처: purple2m.github.io 연금 데이터(2023년 기준) · 아이템 등급은 아이콘 파일명에서 추정한 값입니다 · 슬롯 확률 합계가 100%에 못 미치는 경우 원본 데이터에 빠진 항목이 있는 것입니다(상급 연금에서 특히 많음) · 일반 연금 2~7단계는 원본 사이트의 2023년 1월 자료로 채웠습니다 · 일반 연금 20~22단계와 상급 연금 일부 단계는 재료 정보가 없습니다.</p>
 </main>
 
 <script>
@@ -307,6 +307,8 @@ function renderDetail(){
       <div>
         <h2>${r.n}단계<small>${KIND_NAME[state.kind]}</small></h2>
         <div class="combos">${r.mats.length ? r.mats.map((m,k) => `<div class="combo"><span class="or">${k ? '또는' : '재료'}</span>${m.split(',').map(matChip).join('')}</div>`).join('') : '<div class="hint">원본 사이트에 재료 정보가 없습니다.</div>'}</div>
+        ${r.src === '2023-01' ? '<div class="hint">이 단계의 확률은 원본 사이트의 2023년 1월 자료입니다. 현재 원본 파일에서는 빠져 있지만, 두 자료에 함께 있는 단계는 확률이 모두 같았습니다.</div>' : ''}
+        ${r.note ? `<div class="hint">${esc(r.note)}</div>` : ''}
       </div>
       <div class="stats" id="stats"></div>
     </div>`;
